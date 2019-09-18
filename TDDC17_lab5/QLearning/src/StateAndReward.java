@@ -1,12 +1,13 @@
 public class StateAndReward {
-
+	
 	private static final int angleStates = 10;
-private static final int maximumAngle = 2;
-private static final int minimumAngle = -2;
-
-
+	private static final int maximumAngle = 2;
+	private static final int minimumAngle = -2;
+	
+	
 	public static double reward (double sensorValue, double maximumDistans)
 	{
+		/* kollar ifall absolutbeloppet av sensorValue är större eller lika med maximumDistans*/
 		if (Math.abs(sensorValue) >= maximumDistans)
 		{
 			return 0;
@@ -18,22 +19,29 @@ private static final int minimumAngle = -2;
 	}
 
 
+
+
+	
 	/* State discretization function for the angle controller */
 	public static String getStateAngle(double angle, double vx, double vy) {
 
-		int discretizationAngle = discretize2(angle, angleStates , minimumAngle, maximumAngle);
-		String state = Integer.toString(discretizationAngle);
+		/* TODO: IMPLEMENT THIS FUNCTION */
+		/*int discretizationAngle = discretize2(angle, angleStates , minimumAngle, maximumAngle);*/
+		String state = Integer.toString(discretize2(angle, angleStates , minimumAngle, maximumAngle));
+		//System.out.println("STATE ANGLE = " + state);
 		return state;
+
+		
 	}
 
 	/* Reward function for the angle controller */
 	public static double getRewardAngle(double angle, double vx, double vy) {
 
 		/* TODO: IMPLEMENT THIS FUNCTION */
-
-//		double reward = 0;
+		
 
 		return reward(angle, maximumAngle);
+
 	}
 
 	/* State discretization function for the full hover controller */
@@ -42,7 +50,7 @@ private static final int minimumAngle = -2;
 		/* TODO: IMPLEMENT THIS FUNCTION */
 
 		String state = "OneStateToRuleThemAll2";
-
+		
 		return state;
 	}
 
@@ -50,7 +58,7 @@ private static final int minimumAngle = -2;
 	public static double getRewardHover(double angle, double vx, double vy) {
 
 		/* TODO: IMPLEMENT THIS FUNCTION */
-
+		
 		double reward = 0;
 
 		return reward;
