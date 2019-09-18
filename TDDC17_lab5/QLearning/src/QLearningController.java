@@ -4,14 +4,14 @@ import java.util.Hashtable;
 import java.util.Locale;
 import java.util.Random;
 
-/* TODO:
- * -Define state and reward functions (StateAndReward.java) suitable for your problem
+/* TODO: 
+ * -Define state and reward functions (StateAndReward.java) suitable for your problem 
  * -Define actions
  * -Implement missing parts of Q-learning
  * -Tune state and reward function, and parameters below if the result is not satisfactory */
 
 public class QLearningController extends Controller {
-
+	
 	/* These are the agents senses (inputs) */
 	DoubleFeature x; /* Positions */
 	DoubleFeature y;
@@ -25,18 +25,21 @@ public class QLearningController extends Controller {
 	RocketEngine rightEngine;
 
 	final static int NUM_ACTIONS = 7; /* The takeAction function must be changed if this is modified */
-
+	
 	/* Keep track of the previous state and action */
 	String previous_state = null;
 	double previous_vx = 0;
 	double previous_vy = 0;
 	double previous_angle = 0;
-	int previous_action = 0;
-
+	int previous_action = 0; 
+	
 	/* The tables used by Q-learning */
 	Hashtable<String, Double> Qtable = new Hashtable<String, Double>(); /* Contains the Q-values - the state-action utilities */
 	Hashtable<String, Integer> Ntable = new Hashtable<String, Integer>(); /* Keeps track of how many times each state-action combination has been used */
 
+	/* Updated Q-value*/
+	double newQvalue;
+	
 	/* PARAMETERS OF THE LEARNING ALGORITHM - THESE MAY BE TUNED BUT THE DEFAULT VALUES OFTEN WORK REASONABLY WELL  */
 	static final double GAMMA_DISCOUNT_FACTOR = 0.95; /* Must be < 1, small values make it very greedy */
 	static final double LEARNING_RATE_CONSTANT = 10; /* See alpha(), lower values are good for quick results in large and deterministic state spaces */
@@ -46,13 +49,13 @@ public class QLearningController extends Controller {
 	/* Some internal counters */
 	int iteration = 0; /* Keeps track of how many iterations the agent has run */
 	int action_counter = 0; /* Keeps track of how many times we have repeated the current action */
-	int print_counter = 0; /* Makes printouts less spammy */
+	int print_counter = 0; /* Makes printouts less spammy */ 
 
 	/* These are just internal helper variables, you can ignore these */
 	boolean paused = false;
 	boolean explore = true; /* Will always do exploration by default */
 
-	DecimalFormat df = (DecimalFormat) NumberFormat.getNumberInstance(Locale.US);
+	DecimalFormat df = (DecimalFormat) NumberFormat.getNumberInstance(Locale.US); 
 	public SpringObject object;
 	ComposedSpringObject cso;
 	long lastPressedExplore = 0;
@@ -64,7 +67,7 @@ public class QLearningController extends Controller {
 		vx = (DoubleFeature) cso.getObjectById("vx");
 		vy = (DoubleFeature) cso.getObjectById("vy");
 		angle = (DoubleFeature) cso.getObjectById("angle");
-
+		
 		previous_vy = vy.getValue();
 		previous_vx = vx.getValue();
 		previous_angle = angle.getValue();
@@ -74,7 +77,7 @@ public class QLearningController extends Controller {
 		middleEngine = (RocketEngine) cso.getObjectById("rocket_engine_middle");
 	}
 
-
+	
 	/* Turn off all rockets */
 	void resetRockets() {
 		leftEngine.setBursting(false);
@@ -87,8 +90,9 @@ public class QLearningController extends Controller {
 
 		/* Fire zeh rockets! */
 		/* TODO: Remember to change NUM_ACTIONS constant to reflect the number of actions (including 0, no action) */
-
-		/* TODO: IMPLEMENT THIS FUNCTION */
+		
+		/* TODO: DONE 2.4*/
+		
 		resetRockets();
 		switch(action)
 		{
@@ -113,12 +117,14 @@ public class QLearningController extends Controller {
 			default:
 			break;
 		}
+
+		
 	}
 
 	/* Main decision loop. Called every iteration by the simulator */
 	public void tick(int currentTime) {
 		iteration++;
-
+		
 		if (!paused) {
 			String new_state = StateAndReward.getStateAngle(angle.getValue(), vx.getValue(), vy.getValue());
 
@@ -144,33 +150,32 @@ public class QLearningController extends Controller {
 				/* Update Q value */
 				if (Qtable.get(prev_stateaction) == null) {
 					Qtable.put(prev_stateaction, 0.0);
-				}
+				} 
 
-
+				
 				/* TODO: IMPLEMENT Q-UPDATE HERE! */
-				double QValue = Qtable.get(prev_stateaction)
-												+ alpha(Ntable.get(prev_stateaction))
-											 * (previous_reward
-											 + (GAMMA_DISCOUNT_FACTOR
-											 * getMaxActionQValue(new_state))
-											 - Qtable.get(prev_stateaction));
-				Qtable.put(prev_stateaction, QValue);
+				double Q_update = Qtable.get(prev_stateaction) + alpha(Ntable.get(prev_stateaction)) 
+				* (previous_reward + GAMMA_DISCOUNT_FACTOR * getMaxActionQValue(new_state)
+				- Qtable.get(prev_stateaction));
+
+				
+				Qtable.put(prev_stateaction, Q_update);
 				/* See top for constants and below for helper functions */
-
-
+				
+				
 				int action = selectAction(new_state); /* Make sure you understand how it selects an action */
 
 				performAction(action);
-
+				
 				/* Only print every 10th line to reduce spam */
 				print_counter++;
 				if (print_counter % 10 == 0) {
-					System.out.println("ITERATION: " + iteration + " SENSORS: a=" + df.format(angle.getValue()) + " vx=" + df.format(vx.getValue()) +
-							" vy=" + df.format(vy.getValue()) + " P_STATE: " + previous_state + " P_ACTION: " + previous_action +
+					System.out.println("ITERATION: " + iteration + " SENSORS: a=" + df.format(angle.getValue()) + " vx=" + df.format(vx.getValue()) + 
+							" vy=" + df.format(vy.getValue()) + " P_STATE: " + previous_state + " P_ACTION: " + previous_action + 
 							" P_REWARD: " + df.format(previous_reward) + " P_QVAL: " + df.format(Qtable.get(prev_stateaction)) + " Tested: "
 							+ Ntable.get(prev_stateaction) + " times.");
 				}
-
+				
 				previous_vy = vy.getValue();
 				previous_vx = vx.getValue();
 				previous_angle = angle.getValue();
@@ -183,22 +188,22 @@ public class QLearningController extends Controller {
 
 	/* Computes the learning rate parameter alpha based on the number of times the state-action combination has been tested */
 	public double alpha(int num_tested) {
-		/* Lower learning rate constants means that alpha will become small faster and therefore make the agent behavior converge to
+		/* Lower learning rate constants means that alpha will become small faster and therefore make the agent behavior converge to 
 		 * to a solution faster, but if the state space is not properly explored at that point the resulting behavior may be poor.
 		 * If your state-space is really huge you may need to increase it. */
 		double alpha = (LEARNING_RATE_CONSTANT/(LEARNING_RATE_CONSTANT + num_tested));
 		return alpha;
 	}
-
+	
 	/* Finds the highest Qvalue of any action in the given state */
 	public double getMaxActionQValue(String state) {
 		double maxQval = Double.NEGATIVE_INFINITY;
-
+		
 		for (int action = 0; action < NUM_ACTIONS; action++) {
 			Double Qval = Qtable.get(state+action);
 			if (Qval != null && Qval > maxQval) {
 				maxQval = Qval;
-			}
+			} 
 		}
 
 		if (maxQval == Double.NEGATIVE_INFINITY) {
@@ -207,7 +212,7 @@ public class QLearningController extends Controller {
 		}
 		return maxQval;
 	}
-
+	
 	/* Selects an action in a state based on the registered Q-values and the exploration chance */
 	public int selectAction(String state) {
 		Random rand = new Random();
@@ -236,8 +241,8 @@ public class QLearningController extends Controller {
 		return action;
 	}
 
-
-
+	
+	
 	/* The 'E' key will toggle the agents exploration mode. Turn this off to test its behavior */
 	public void toggleExplore() {
 		/* Make sure we don't toggle it multiple times */
@@ -251,7 +256,7 @@ public class QLearningController extends Controller {
 			System.out.println("Turning ON exploration!");
 			explore = true;
 		}
-		lastPressedExplore = System.currentTimeMillis();
+		lastPressedExplore = System.currentTimeMillis(); 
 	}
 
 	/* Keys 1 and 2 can be customized for whatever purpose if you want to */
@@ -263,7 +268,7 @@ public class QLearningController extends Controller {
 	public void toggleCustom2() {
 		System.out.println("Custom key 2 pressed!");
 	}
-
+	
 	public void pause() {
 		paused = true;
 		resetRockets();
